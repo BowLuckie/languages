@@ -1,4 +1,4 @@
-Program = _{ SOI ~ (Expr ~ EOF)* }
+Program = _{ SOI ~ Expr ~ (";" ~ Expr)* ~ ";"? ~ EOI }
 
 Expr = { BinaryExpr | UnaryExpr | Term }
 
@@ -13,5 +13,3 @@ Operator = { "+" | "-" }
 Int = @{ ASCII_DIGIT+ }
 
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
-
-EOF = _{ EOI | ";" }

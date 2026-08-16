@@ -1,5 +1,8 @@
+calc := "./src/test/test.calc"
+backend := "vm"
+
 default:
-    cargo run ./src/test/test.calc
+    cargo run -- --backend {{backend}} {{calc}}
 
 test:
     cargo test

@@ -1,0 +1,10 @@
+[package]
+name = "calculator"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pest =  "2.9.0"
+pest_derive = "2.9.0"
+inkwell = { version = "0.7.1", features = ["llvm20-1"] }
+anyhow = "1.0.104"

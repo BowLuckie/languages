@@ -1,0 +1,5 @@
+default:
+    cargo run ./src/test/test.calc
+
+test:
+    cargo test

@@ -2,39 +2,38 @@ use crate::{
     ast::{Node, Operator},
     compile::{
         Compile,
-        vm::opcode::{Address, OpCode, make_byte},
+        vm::opcode::{Address, Byte, OpCode, make_byte},
     },
 };
 
 #[derive(Debug, Default)]
-pub struct Bytecode {
-    pub instructions: Vec<u8>,
-    pub constant: Vec<Node>,
+pub(super) struct Bytecode {
+    pub(super) instructions: Vec<Byte>,
+    pub(super) constant: Vec<Node>,
 }
 
-pub struct Interpreter {
+pub(super) struct VmInterpreter {
     bytecode: Bytecode,
 }
 
-impl Compile for Interpreter {
+impl Compile for VmInterpreter {
     type Output = Bytecode;
 
     fn from_ast(ast: Vec<Node>) -> Self::Output {
-        let mut interpreter = Interpreter {
+        let mut interpreter = VmInterpreter {
             bytecode: Bytecode::default(),
         };
 
         for node in ast {
             println!("compiling node {:?}", node);
             interpreter.interpret_node(node);
-            interpreter.add_instruction(OpCode::POP);
         }
 
         interpreter.bytecode
     }
 }
 
-impl Interpreter {
+impl VmInterpreter {
     fn add_constant(&mut self, node: Node) -> Address {
         let address = self.bytecode.constant.len() as Address;
         self.bytecode.constant.push(node);
@@ -57,8 +56,8 @@ impl Interpreter {
             Node::UnaryExpr { op, child } => {
                 self.interpret_node(*child);
                 match op {
-                    Operator::Plus => self.add_instruction(OpCode::NEG),
-                    Operator::Minus => self.add_instruction(OpCode::POS),
+                    Operator::Plus => self.add_instruction(OpCode::POS),
+                    Operator::Minus => self.add_instruction(OpCode::NEG),
                 };
             }
 

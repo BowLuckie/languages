@@ -1,7 +1,12 @@
 use std::fmt;
 use std::path::PathBuf;
 
-use calculator::compile::Compile;
+use calculator::compile::{
+    Compile,
+    interpreter::Interpreter,
+    jit::Jit,
+    vm::VM,
+};
 use clap::{Parser, ValueEnum};
 
 #[derive(ValueEnum, Clone)]
@@ -42,20 +47,17 @@ fn main() {
 
     match cli.backend {
         Backend::Interpreter => {
-            let res = calculator::compile::interpreter::Interpreter::from_source(&source);
+            let res = Interpreter::from_source(&source);
             println!("result: {:?}", res);
         }
 
         Backend::Vm => {
-            let mut vm = calculator::compile::vm::VM::from_source(&source);
-            println!("instructions: {:02X?}", vm.bytecode.instructions);
-            println!("constant table: {:?}", vm.bytecode.constant);
-            vm.run();
-            println!("result: {:?}", vm.result());
+            let res = VM::from_source(&source);
+            println!("result: {:?}", res);
         }
 
         Backend::Jit => {
-            let res = calculator::compile::jit::Jit::from_source(&source);
+            let res = Jit::from_source(&source);
             println!("result: {:?}", res);
         }
     }

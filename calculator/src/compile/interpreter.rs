@@ -6,7 +6,7 @@ use crate::{
 pub struct Interpreter;
 
 impl Interpreter {
-    pub fn eval(node: &Node) -> i32 {
+    fn eval(node: &Node) -> i32 {
         match node {
             Node::Int(n) => *n,
             Node::UnaryExpr { op, child } => {

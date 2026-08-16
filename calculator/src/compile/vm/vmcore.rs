@@ -1,3 +1,5 @@
+use std::fmt::{self, Display, Formatter};
+
 use crate::{
     ast::Node,
     compile::{
@@ -9,25 +11,35 @@ use crate::{
     },
 };
 
+use super::bytecode::VmInterpreter;
+
 const STACK_SIZE: usize = usize::pow(2, 9); // 2^9
 
 pub struct VM {
-    pub bytecode: Bytecode,
+    bytecode: Bytecode,
     stack: [Node; STACK_SIZE],
     top: usize,
 }
 
 impl Compile for VM {
-    type Output = VM;
+    type Output = Vec<Node>;
 
     fn from_ast(ast: Vec<Node>) -> Self::Output {
-        let bytecode = super::bytecode::Interpreter::from_ast(ast);
-        VM::new(bytecode)
+        let bytecode = VmInterpreter::from_ast(ast);
+        let mut vm = VM::new(bytecode);
+        vm.run();
+        let mut results = vec![];
+        while let Some(val) = vm.result() {
+            results.push(val);
+            vm.pop();
+        }
+        results.reverse();
+        results
     }
 }
 
 impl VM {
-    pub fn new(bytecode: Bytecode) -> Self {
+    fn new(bytecode: Bytecode) -> Self {
         Self {
             bytecode,
             stack: std::array::from_fn(|_| Node::Int(0)),
@@ -35,7 +47,7 @@ impl VM {
         }
     }
 
-    pub fn run(&mut self) {
+    fn run(&mut self) {
         let mut ip = 0;
         while ip < self.bytecode.instructions.len() {
             let instruction_addr = ip;
@@ -78,38 +90,43 @@ impl VM {
 
                 0x03 => {
                     if let (Node::Int(r), Node::Int(l)) = (self.pop(), self.pop()) {
-                        return self.push(Node::Int(l + r));
+                        self.push(Node::Int(l + r));
+                    } else {
+                        panic!(
+                            "improper arguments to add instruction OpAdd (0x03) {}",
+                            instruction_addr,
+                        );
                     }
-
-                    panic!(
-                        "improper arguments to add instruction OpAdd (0x05) {}",
-                        instruction_addr,
-                    );
                 }
 
                 0x04 => {
                     if let (Node::Int(r), Node::Int(l)) = (self.pop(), self.pop()) {
-                        return self.push(Node::Int(l - r));
+                        self.push(Node::Int(l - r));
+                    } else {
+                        panic!(
+                            "improper arguments to add instruction OpSub (0x04) {}",
+                            instruction_addr,
+                        );
                     }
-
-                    panic!(
-                        "improper arguments to add instruction OpSub (0x04) {}",
-                        instruction_addr,
-                    );
                 }
 
                 0x0A => {
-                    if !matches!(self.peek_top(), Node::Int(_)) {
+                    if let Node::Int(n) = self.pop() {
+                        self.push(Node::Int(-n));
+                    } else {
                         panic!(
-                            "improper arguments to add instruction OpPlus (0x05) {}",
+                            "improper arguments to add instruction OpNeg (0x0A) {}",
                             instruction_addr,
                         );
                     }
                 }
 
                 0x0B => {
-                    if let Node::Int(n) = self.pop() {
-                        self.push(Node::Int(-n));
+                    if !matches!(self.peek_top(), Node::Int(_)) {
+                        panic!(
+                            "improper arguments to add instruction OpPos (0x0B) {}",
+                            instruction_addr,
+                        );
                     }
                 }
                 _ => panic!("unknown instruction! {}", op),
@@ -117,7 +134,7 @@ impl VM {
         }
     }
 
-    pub fn push(&mut self, node: Node) {
+    fn push(&mut self, node: Node) {
         self.stack[self.top] = node;
         if self.top >= 512 {
             panic!("stack overflow! out of memory."); // 
@@ -126,20 +143,83 @@ impl VM {
         self.top = unsafe { self.top.unchecked_add(1) };
     }
 
-    pub fn pop(&mut self) -> Node {
+    fn pop(&mut self) -> Node {
         self.top -= 1;
         self.stack[self.top].clone() // TODO: mem::replace()
     }
 
-    pub fn peek_top(&self) -> Node {
+    fn peek_top(&self) -> Node {
         self.stack[self.top - 1].clone()
     }
 
-    pub fn result(&self) -> Option<Node> {
+    fn result(&self) -> Option<Node> {
         if self.top > 0 {
             Some(self.stack[self.top - 1].clone())
         } else {
             None
         }
+    }
+}
+
+impl Display for Bytecode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let instructions = &self.instructions;
+        let mut i = 0;
+
+        writeln!(f, "Instructions:")?;
+
+        while i < instructions.len() {
+            match instructions[i] {
+                0x01 => {
+                    if i + 2 >= instructions.len() {
+                        writeln!(f, "{i:04X}: LDC <missing address>")?;
+                        break;
+                    }
+
+                    let address = u16::from_be_bytes([instructions[i + 1], instructions[i + 2]]);
+
+                    writeln!(f, "{i:04X}: LDC 0x{address:04X}")?;
+                    i += 3;
+                }
+
+                0x02 => {
+                    writeln!(f, "{i:04X}: POP")?;
+                    i += 1;
+                }
+
+                0x03 => {
+                    writeln!(f, "{i:04X}: ADD")?;
+                    i += 1;
+                }
+
+                0x04 => {
+                    writeln!(f, "{i:04X}: SUB")?;
+                    i += 1;
+                }
+
+                0x0A => {
+                    writeln!(f, "{i:04X}: NEG")?;
+                    i += 1;
+                }
+
+                0x0B => {
+                    writeln!(f, "{i:04X}: POS")?;
+                    i += 1;
+                }
+
+                byte => {
+                    writeln!(f, "{i:04X}: UNKNOWN 0x{byte:02X}")?;
+                    i += 1;
+                }
+            }
+        }
+
+        writeln!(f, "\nConstants:")?;
+
+        for (i, constant) in self.constant.iter().enumerate() {
+            writeln!(f, "{i:04X}: {constant}")?;
+        }
+
+        Ok(())
     }
 }

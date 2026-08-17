@@ -3,14 +3,18 @@ use std::fmt;
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Operator {
     Plus,
-    Minus,
+    Min,
+    Mul,
+    Div,
 }
 
 impl fmt::Display for Operator {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match &self {
             Operator::Plus => write!(f, "+"),
-            Operator::Minus => write!(f, "-"),
+            Operator::Min => write!(f, "-"),
+            Operator::Mul => write!(f, "*"),
+            Operator::Div => write!(f, "/"),
         }
     }
 }

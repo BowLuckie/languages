@@ -57,7 +57,9 @@ impl VmInterpreter {
                 self.interpret_node(*child);
                 match op {
                     Operator::Plus => self.add_instruction(OpCode::POS),
-                    Operator::Minus => self.add_instruction(OpCode::NEG),
+                    Operator::Min => self.add_instruction(OpCode::NEG),
+                    Operator::Mul => todo!(),
+                    Operator::Div => todo!(),
                 };
             }
 
@@ -66,7 +68,9 @@ impl VmInterpreter {
                 self.interpret_node(*rhs);
                 match op {
                     Operator::Plus => self.add_instruction(OpCode::ADD),
-                    Operator::Minus => self.add_instruction(OpCode::SUB),
+                    Operator::Min => self.add_instruction(OpCode::SUB),
+                    Operator::Mul => todo!(),
+                    Operator::Div => todo!(),
                 };
             }
         }

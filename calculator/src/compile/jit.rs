@@ -33,7 +33,8 @@ impl<'a> RecursiveBuilder<'a> {
                 let child = self.build(child);
                 match op {
                     Operator::Plus => child.const_neg(),
-                    Operator::Minus => child,
+                    Operator::Min => child,
+                    _ => panic!("cannot apply unary with a scalar operator"),
                 }
             }
             Node::BinaryExpr { op, lhs, rhs } => {
@@ -42,7 +43,12 @@ impl<'a> RecursiveBuilder<'a> {
 
                 match op {
                     Operator::Plus => self.builder.build_int_add(left, right, "_add").unwrap(),
-                    Operator::Minus => self.builder.build_int_sub(left, right, "_sub").unwrap(),
+                    Operator::Min => self.builder.build_int_sub(left, right, "_sub").unwrap(),
+                    Operator::Mul => self.builder.build_int_mul(left, right, "_mul").unwrap(),
+                    Operator::Div => self
+                        .builder
+                        .build_int_signed_div(left, right, "_div")
+                        .unwrap(),
                 }
             }
         }
@@ -70,11 +76,12 @@ impl Compile for Jit {
 
         builder.position_at_end(entry_block);
 
-        for node in ast {
+        let mut last = None;
+        for node in &ast {
             let recursive_builder = RecursiveBuilder::new(i32_, &builder);
-            let return_value = recursive_builder.build(&node);
-            builder.build_return(Some(&return_value))?;
+            last = Some(recursive_builder.build(node));
         }
+        builder.build_return(Some(&last.unwrap()))?;
 
         println!(
             "generated LLVM IR: {}",
@@ -101,7 +108,6 @@ mod tests {
         assert_eq!(Jit::from_source("(2 + 3) - 1").unwrap(), 4);
         assert_eq!(Jit::from_source("1 + ((2 + 3) - (2 + 3))").unwrap(), 1);
         assert_eq!(Jit::from_source("(1 + 2)").unwrap(), 3);
-        // parser fails
-        // assert_eq!(Jit::from_source("2 + 3 - 1").unwrap(), 4);
+        assert_eq!(Jit::from_source("2 + 3 - 1").unwrap(), 4);
     }
 }

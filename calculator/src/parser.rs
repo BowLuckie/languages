@@ -102,7 +102,9 @@ fn fold_unary_expr(op: Operator, child: Node) -> Node {
 fn parse_operator(op: Pair<'_, Rule>) -> Operator {
     match op.as_str() {
         "+" => Operator::Plus,
-        "-" => Operator::Minus,
+        "-" => Operator::Min,
+        "/" => Operator::Div,
+        "*" => Operator::Mul,
         _ => unreachable!(),
     }
 }
@@ -137,7 +139,7 @@ mod tests {
         assert_eq!(
             neg_two.clone().unwrap(),
             vec![Node::UnaryExpr {
-                op: Operator::Minus,
+                op: Operator::Min,
                 child: Box::new(Node::Int(2))
             }]
         );
@@ -161,7 +163,7 @@ mod tests {
         assert_eq!(
             minus.clone().unwrap(),
             vec![Node::BinaryExpr {
-                op: Operator::Minus,
+                op: Operator::Min,
                 lhs: Box::new(Node::Int(1)),
                 rhs: Box::new(Node::Int(2))
             }]
@@ -216,7 +218,7 @@ mod tests {
             vec![Node::BinaryExpr {
                 op: Operator::Plus,
                 lhs: Box::new(Node::UnaryExpr {
-                    op: Operator::Minus,
+                    op: Operator::Min,
                     child: Box::new(Node::Int(1))
                 }),
                 rhs: Box::new(Node::Int(2))

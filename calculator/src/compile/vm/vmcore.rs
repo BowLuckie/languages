@@ -26,6 +26,7 @@ impl Compile for VM {
 
     fn from_ast(ast: Vec<Node>) -> Self::Output {
         let bytecode = VmInterpreter::from_ast(ast);
+        println!("\n==== bytecode ====\n{}", bytecode);
         let mut vm = VM::new(bytecode);
         vm.run();
         let mut results = vec![];

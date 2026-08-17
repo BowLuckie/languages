@@ -1,12 +1,7 @@
 use std::fmt;
 use std::path::PathBuf;
 
-use calculator::compile::{
-    Compile,
-    interpreter::Interpreter,
-    jit::Jit,
-    vm::VM,
-};
+use calculator::compile::{Compile, interpreter::Interpreter, jit::Jit, vm::VM};
 use clap::{Parser, ValueEnum};
 
 #[derive(ValueEnum, Clone)]

@@ -2,6 +2,7 @@
 name = "calculator"
 version = "0.1.0"
 edition = "2024"
+default-run = "calculator"
 
 [dependencies]
 pest =  "2.9.0"
@@ -9,6 +10,7 @@ pest_derive = "2.9.0"
 inkwell = { version = "0.7.1", features = ["llvm20-1"] }
 anyhow = "1.0.104"
 clap = { version = "4", features = ["derive"] }
+rustyline = "18.0.1"
 
 [lib]
 path = "src/lib.rs"

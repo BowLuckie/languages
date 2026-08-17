@@ -1,8 +1,34 @@
 calc := "./src/test/test.calc"
-backend := "vm"
+backend := "jit"
 
-default:
-    cargo run -- --backend {{backend}} {{calc}}
+default: run
+
+run file=calc bknd=backend:
+    cargo run -- --backend {{bknd}} {{file}}
+
+vm:
+    just run {{calc}} vm
+
+interpreter:
+    just run {{calc}} interpreter
+
+jit:
+    just run {{calc}} jit
+
+repl:
+    cargo run --bin repl
 
 test:
     cargo test
+
+build:
+    cargo build
+
+release:
+    cargo build --release
+
+lint:
+    cargo clippy -- -W warnings
+
+clean:
+    cargo clean

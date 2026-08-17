@@ -13,7 +13,9 @@ impl Interpreter {
                 let child = Self::eval(child);
                 match op {
                     Operator::Plus => child,
-                    Operator::Minus => -child,
+                    Operator::Min => -child,
+                    Operator::Mul => todo!(),
+                    Operator::Div => todo!(),
                 }
             }
             Node::BinaryExpr { op, lhs, rhs } => {
@@ -22,7 +24,9 @@ impl Interpreter {
 
                 match op {
                     Operator::Plus => lhs_ret + rhs_ret,
-                    Operator::Minus => lhs_ret - rhs_ret,
+                    Operator::Min => lhs_ret - rhs_ret,
+                    Operator::Mul => todo!(),
+                    Operator::Div => todo!(),
                 }
             }
         }

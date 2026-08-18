@@ -92,11 +92,5 @@ fn main() -> Result<()> {
         }
     }
 
-    let (max, best_i): Option<i32> = None;
-    let (i, h) = (0, 0);
-    if max.is_some_and(|inner| h > inner) {
-        be
-    }
-
     Ok(())
 }

@@ -1,4 +1,4 @@
-calc := "./src/test/test.calc"
+calc := "./src/test.calc"
 backend := "jit"
 
 default: run

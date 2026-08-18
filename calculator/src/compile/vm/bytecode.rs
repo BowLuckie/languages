@@ -73,6 +73,7 @@ impl VmInterpreter {
                     Operator::Div => todo!(),
                 };
             }
+            Node::Float(_) => todo!(),
         }
     }
 }

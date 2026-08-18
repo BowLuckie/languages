@@ -9,6 +9,7 @@ impl Interpreter {
     fn eval(node: &Node) -> i32 {
         match node {
             Node::Int(n) => *n,
+            Node::Float(n) => todo!(),
             Node::UnaryExpr { op, child } => {
                 let child = Self::eval(child);
                 match op {

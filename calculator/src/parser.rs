@@ -88,6 +88,10 @@ fn parse_term(pair: Pair<'_, Rule>) -> Node {
             Node::Int(int)
         }
         Rule::Expr => parse_expr(child),
+        Rule::Float => {
+            let float = child.as_str().parse::<f32>().unwrap();
+            Node::Float(float)
+        }
         _ => unreachable!(),
     }
 }

@@ -1,3 +1,5 @@
+use fl::parser::parse;
+
 fn main() {
-    println!("Hello, world!");
+    parse("x =1");
 }

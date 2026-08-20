@@ -17,19 +17,16 @@ pub fn parse(source: &str) -> SResult<Program> {
 
     let mut program = Vec::new();
     for pair in pairs {
-        program.push(parse_stmt(pair)?);
+        if pair.as_rule() == Rule::Stmt {
+            program.push(parse_stmt(pair)?);
+        }
     }
 
+    dbg!(&program);
     Ok(program)
 }
 
 fn parse_stmt(pair: Pair<Rule>) -> StmtResult {
-    assert_eq!(
-        pair.as_rule(),
-        Rule::Stmt,
-        "Unexpected statement rule: {:?}",
-        pair
-    );
     let inner = pair.into_inner().next().unwrap();
     match inner.as_rule() {
         Rule::Function => parse_function(inner),
@@ -102,14 +99,48 @@ fn parse_expr(pair: Pair<Rule>) -> ExprResult {
         Rule::Additive => parse_binary(pair),
         Rule::Multiplicative => parse_binary(pair),
         Rule::Unary => parse_unary(pair),
-        Rule::Call => todo!(),
-        Rule::Literal => todo!(),
-        Rule::Int => todo!(),
-        Rule::Bool => todo!(),
-        Rule::Identifier => todo!(),
-        Rule::Block => todo!(),
+        Rule::Call => parse_call(pair),
+        Rule::Literal => parse_literal(pair),
+        Rule::Int => Ok(Expr::Int(pair.as_str().parse().unwrap())),
+        Rule::Bool => Ok(Expr::Bool(pair.as_str() == "true")),
+        Rule::Identifier => Ok(Expr::Var(pair.as_str().to_string())),
+        Rule::Block => {
+            let stmts = parse_block(pair)?;
+            Ok(Expr::Block(stmts))
+        }
         r => Err(format!("Unexpected expression rule: {:?}", r)),
     }
+}
+
+fn parse_literal(pair: Pair<Rule>) -> Result<Expr, String> {
+    let inner = pair.into_inner().next().unwrap();
+    match inner.as_rule() {
+        Rule::Int => Ok(Expr::Int(inner.as_str().parse::<u64>().unwrap())),
+        Rule::Bool => Ok(Expr::Bool(inner.as_str() == "true")),
+        l => panic!("Unexpected Literal {:?}", l),
+    }
+}
+
+fn parse_call(pair: Pair<Rule>) -> Result<Expr, String> {
+    let mut inner = pair.into_inner();
+    let primrary = inner.next().unwrap();
+    let mut expr = parse_expr(primrary)?;
+
+    for call_arg in inner {
+        if call_arg.as_rule() == Rule::CallArgs {
+            let args: Vec<Expr> = call_arg
+                .into_inner()
+                .map(|e| parse_expr(e))
+                .collect::<Result<_, _>>()?;
+            if let Expr::Var(name) = expr {
+                expr = Expr::Call { name, args };
+            } else {
+                return Err("Can only call named functions".to_string());
+            }
+        }
+    }
+
+    Ok(expr)
 }
 
 fn parse_unary(pair: Pair<Rule>) -> Result<Expr, String> {

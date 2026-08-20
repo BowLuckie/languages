@@ -115,7 +115,7 @@ fn parse_expr(pair: Pair<Rule>) -> ExprResult {
 fn parse_literal(pair: Pair<Rule>) -> Result<Expr, String> {
     let inner = pair.into_inner().next().unwrap();
     match inner.as_rule() {
-        Rule::Int => Ok(Expr::Int(inner.as_str().parse::<u64>().unwrap())),
+        Rule::Int => Ok(Expr::Int(inner.as_str().parse::<i64>().unwrap())),
         Rule::Bool => Ok(Expr::Bool(inner.as_str() == "true")),
         l => panic!("Unexpected Literal {:?}", l),
     }

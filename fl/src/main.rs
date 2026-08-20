@@ -1,12 +1,23 @@
 use std::{
-    error::Error,
+    env,
     fs::{self},
 };
 
-use fl::parser::parse;
+fn main() {
+    let filename = env::args().collect::<Vec<String>>()[1].to_string();
+    let source = match fs::read_to_string(&filename) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("Error reading file '{}': {}", filename, e);
+            std::process::exit(1);
+        }
+    };
 
-fn main() -> anyhow::Result<(), Box<dyn Error>> {
-    let source = fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/src/test.fl"))?;
-    parse(source.as_str())?;
-    Ok(())
+    match fl::run(&source) {
+        Ok(value) => println!("{}", value),
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
+    }
 }

@@ -1,7 +1,7 @@
 WHITESPACE = _{ " " | "\t" | NEWLINE }
 COMMENT    = _{ "#" ~ (!NEWLINE ~ ANY)* }
 
-KEYWORD = @{ "fn" | "if" | "else" | "while" | "true" | "false" | "return" }
+KEYWORD = @{ "fn" | "if" | "else" | "while" | "for" | "in" | "true" | "false" | "return" | "@macro" }
 
 Identifier = @{ !KEYWORD ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 

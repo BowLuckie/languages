@@ -1,7 +1,7 @@
 default: repl
 
 file:
-    cargo run ./src/test.fl
+    cargo run -- ./src/test.fl --verbose --emit-ast
 
 repl:
     cargo run

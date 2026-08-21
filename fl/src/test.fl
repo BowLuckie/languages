@@ -1,7 +1,9 @@
+@macro x -> z
+
 fn main() {
-    for i in 0..10 {
-        print(i)
-    }
+    x = 10
+   y = 4
+   print(z)
 }
 
 print(main())

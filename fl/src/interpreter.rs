@@ -277,6 +277,14 @@ impl Interpreter {
                 self.call_stack.pop();
                 Ok(Value::Unit)
             }
+            Expr::Exit(expr) => {
+                let code = self.eval_expr(expr)?;
+                if let Value::Int(n) = code {
+                    std::process::exit(n as i32);
+                } else {
+                    Err(format!("exit args must be a int, found {}", code))
+                }
+            }
         }
     }
 

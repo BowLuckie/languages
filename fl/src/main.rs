@@ -6,7 +6,7 @@ use std::{
 };
 
 use clap::Parser;
-use fl::{interpreter::Interpreter, parser::parse};
+use fl::{interpreter::Interpreter, parser::parse, preprocessor::Preprocessor};
 
 #[derive(Parser)]
 #[command(name = "fl", version, about = "A small interpreted language")]
@@ -39,9 +39,66 @@ fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
     if let Some(filename) = &cli.file {
-        run_file(filename, &cli)?;
+        let raw = fs::read_to_string(filename).map_err(|e| -> Box<dyn Error> {
+            eprintln!("Error reading file '{}': {}", filename, e);
+            e.into()
+        })?;
+        let mut proc = Preprocessor::default();
+        let mut source = String::new();
+        for line in raw.lines() {
+            if Preprocessor::is_macro_def(line) {
+                proc.define(line);
+            } else {
+                source.push_str(line);
+                source.push('\n');
+            }
+        }
+        proc.preprocess(&mut source);
+        let mut interpreter = Interpreter::new();
+        interpreter.set_trace(cli.trace);
+        run_from_source(&source, &cli, &mut interpreter)?;
     } else {
         repl(&cli)?;
+    }
+
+    Ok(())
+}
+
+fn run_from_source(
+    source: &str,
+    cli: &Cli,
+    interpreter: &mut Interpreter,
+) -> Result<(), Box<dyn Error>> {
+    let start = Instant::now();
+    let program = match parse(source) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("parse error: {}", e);
+            return Err(e.into());
+        }
+    };
+
+    if cli.verbose {
+        eprintln!("parsed in {:?}", start.elapsed());
+    }
+
+    if cli.emit_ast {
+        println!("{:#?}", program);
+        return Ok(());
+    }
+
+    if cli.parse_only {
+        return Ok(());
+    }
+
+    let run_start = Instant::now();
+    if let Err(e) = interpreter.run(&program) {
+        eprintln!("runtime error: {}", e);
+        return Err(e.into());
+    }
+
+    if cli.verbose {
+        eprintln!("executed in {:?}", run_start.elapsed());
     }
 
     Ok(())
@@ -55,6 +112,7 @@ fn repl(cli: &Cli) -> Result<(), Box<dyn Error>> {
 
     let mut interpreter = Interpreter::new();
     interpreter.set_trace(cli.trace);
+    let mut proc = Preprocessor::default();
     let (stdin, mut stdout) = (io::stdin(), io::stdout());
 
     loop {
@@ -100,72 +158,17 @@ fn repl(cli: &Cli) -> Result<(), Box<dyn Error>> {
 
         let input = input.trim();
 
-        let start = Instant::now();
-        match parse(input) {
-            Ok(program) => {
-                if cli.verbose {
-                    eprintln!("parsed in {:?}", start.elapsed());
-                }
-                if cli.emit_ast {
-                    println!("{:#?}", program);
-                } else if !cli.parse_only
-                    && let Err(e) = interpreter.run(&program)
-                {
-                    eprintln!("runtime error: {}", e);
-                }
+        if Preprocessor::is_macro_def(input) {
+            proc.define(input);
+        } else {
+            let mut source = input.to_string();
+            proc.preprocess(&mut source);
+            if let Err(e) = run_from_source(&source, cli, &mut interpreter) {
+                let _ = e;
             }
-
-            Err(err) => eprintln!("parse error: {}", err),
         }
 
         stdout.flush()?;
-    }
-
-    Ok(())
-}
-
-fn run_file(filename: &str, cli: &Cli) -> Result<(), Box<dyn Error>> {
-    let source = match fs::read_to_string(filename) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("Error reading file '{}': {}", filename, e);
-            return Err(e.into());
-        }
-    };
-
-    let start = Instant::now();
-    let program = match parse(&source) {
-        Ok(p) => p,
-        Err(e) => {
-            eprintln!("parse error: {}", e);
-            return Err(e.into());
-        }
-    };
-
-    if cli.verbose {
-        eprintln!("parsed in {:?}", start.elapsed());
-    }
-
-    if cli.emit_ast {
-        println!("{:#?}", program);
-        return Ok(());
-    }
-
-    if cli.parse_only {
-        return Ok(());
-    }
-
-    let mut interpreter = Interpreter::new();
-    interpreter.set_trace(cli.trace);
-
-    let run_start = Instant::now();
-    if let Err(e) = interpreter.run(&program) {
-        eprintln!("runtime error: {}", e);
-        return Err(e.into());
-    }
-
-    if cli.verbose {
-        eprintln!("executed in {:?}", run_start.elapsed());
     }
 
     Ok(())

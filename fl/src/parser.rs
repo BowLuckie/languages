@@ -133,10 +133,19 @@ fn parse_call(pair: Pair<Rule>) -> Result<Expr, String> {
                 .map(|e| parse_expr(e))
                 .collect::<Result<_, _>>()?;
             if let Expr::Var(name) = expr {
-                if name == "print" {
-                    expr = Expr::Print(args)
-                } else {
-                    expr = Expr::Call { name, args };
+                // builtins
+                match name.as_ref() {
+                    "print" => expr = Expr::Print(args),
+                    "exit" => {
+                        if args.len() != 1 {
+                            return Err(format!(
+                                "exit expects only 1 argument, found {}",
+                                args.len()
+                            ));
+                        }
+                        expr = Expr::Exit(Box::new(args[0].clone()));
+                    }
+                    _ => expr = Expr::Call { name, args },
                 }
             } else {
                 return Err("Can only call named functions".to_string());

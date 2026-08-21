@@ -1,8 +1,7 @@
-
 WHITESPACE = _{ " " | "\t" | NEWLINE }
 COMMENT    = _{ "#" ~ (!NEWLINE ~ ANY)* }
 
-KEYWORD = @{ "def" | "if" | "else" | "while" | "true" | "false" | "return" | "int" | "bool" }
+KEYWORD = @{ "fn" | "if" | "else" | "while" | "true" | "false" | "return" | "int" | "bool" }
 
 Identifier = @{ !KEYWORD ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
@@ -15,7 +14,7 @@ Program = _{ SOI ~ Stmt* ~ EOI }
 Stmt       =  { Function | SimpleStmt }
 SimpleStmt = _{ (Return | Assignment | Expr) }
 
-Function    =  { "def" ~ Identifier ~ "(" ~ TypedParams? ~ ")" ~ ReturnType? ~ Block }
+Function    =  { "fn" ~ Identifier ~ "(" ~ TypedParams? ~ ")" ~ ReturnType? ~ Block }
 TypedParams = _{ TypedParam ~ ("," ~ TypedParam)* }
 TypedParam  =  { Identifier ~ ":" ~ Type }
 ReturnType  =  { "->" ~ Type }

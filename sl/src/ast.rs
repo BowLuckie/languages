@@ -2,6 +2,7 @@ use core::fmt;
 
 use crate::types::Type;
 
+pub type StmtResult = Result<Stmt, String>;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Function {
@@ -106,7 +107,7 @@ impl fmt::Display for Stmt {
                     .collect();
                 write!(
                     f,
-                    "def {}({}) -> {} {{ ... }}",
+                    "fn {}({}) -> {} {{ ... }}",
                     name,
                     params_str.join(", "),
                     return_type

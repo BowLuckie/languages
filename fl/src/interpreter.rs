@@ -141,45 +141,6 @@ impl Interpreter {
                 self.eval_binary_op(*op, l, r)
             }
 
-            Expr::Call { name, args } => {
-                let func = self.lookup_var(name)?;
-                let (params, body) = match func {
-                    Value::Function { params, body } => (params, body),
-                    _ => return Err(format!("{} is not a function", name)),
-                };
-                let args_val: Vec<Value> = args
-                    .iter()
-                    .map(|e| self.eval_expr(e))
-                    .collect::<Result<_, _>>()?;
-
-                if params.len() != args_val.len() {
-                    return Err(format!(
-                        "Function {} expected {} arguments, got {}",
-                        name,
-                        params.len(),
-                        args_val.len()
-                    ));
-                }
-
-                let mut frame = Frame::new();
-                for (param, arg) in params.iter().zip(args_val) {
-                    frame.locals.insert(param.clone(), arg);
-                }
-                self.call_stack.push(frame);
-                let mut result = Value::Unit;
-                for stmt in body {
-                    match self.exec_stmt(&stmt)? {
-                        ControlFlow::Continue(value) => result = value,
-                        ControlFlow::Return(value) => {
-                            self.call_stack.pop();
-                            return Ok(value);
-                        }
-                    }
-                }
-                self.call_stack.pop();
-                Ok(result)
-            }
-
             Expr::If {
                 cond,
                 then_branch,
@@ -232,6 +193,89 @@ impl Interpreter {
                     }
                 }
                 Ok(result)
+            }
+
+            Expr::Call { name, args } => {
+                let func = self.lookup_var(name)?;
+                let (params, body) = match func {
+                    Value::Function { params, body } => (params, body),
+                    _ => return Err(format!("{} is not a function", name)),
+                };
+                let args_val: Vec<Value> = args
+                    .iter()
+                    .map(|e| self.eval_expr(e))
+                    .collect::<Result<_, _>>()?;
+
+                if params.len() != args_val.len() {
+                    return Err(format!(
+                        "Function {} expected {} arguments, got {}",
+                        name,
+                        params.len(),
+                        args_val.len()
+                    ));
+                }
+
+                let mut frame = Frame::new();
+                for (param, arg) in params.iter().zip(args_val) {
+                    frame.locals.insert(param.clone(), arg);
+                }
+                self.call_stack.push(frame);
+                let mut result = Value::Unit;
+                for stmt in body {
+                    match self.exec_stmt(&stmt)? {
+                        ControlFlow::Continue(value) => result = value,
+                        ControlFlow::Return(value) => {
+                            self.call_stack.pop();
+                            return Ok(value);
+                        }
+                    }
+                }
+                self.call_stack.pop();
+                Ok(result)
+            }
+
+            Expr::For {
+                var,
+                start,
+                end,
+                body,
+            } => {
+                let start = self.eval_expr(start)?;
+                let end = self.eval_expr(end)?;
+
+                let ns;
+                let ne;
+
+                if let Value::Int(_ns) = start
+                    && let Value::Int(_ne) = end
+                {
+                    ns = _ns;
+                    ne = _ne;
+                } else {
+                    return Err(format!(
+                        "start and end should both be ints, found {} and {}",
+                        start, end
+                    ));
+                }
+
+                for iteration_var in ns..ne {
+                    let mut frame = Frame::new();
+                    frame.locals.insert(var.clone(), Value::Int(iteration_var));
+                    self.call_stack.push(frame);
+
+                    for stmt in body {
+                        match self.exec_stmt(stmt)? {
+                            ControlFlow::Continue(_) => {}
+                            ControlFlow::Return(value) => {
+                                self.call_stack.pop();
+                                return Ok(value);
+                            }
+                        }
+                    }
+                }
+
+                self.call_stack.pop();
+                Ok(Value::Unit)
             }
         }
     }

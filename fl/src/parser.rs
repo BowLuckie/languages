@@ -94,6 +94,7 @@ fn parse_expr(pair: Pair<Rule>) -> ExprResult {
         }
         Rule::Conditional => parse_conditional(pair),
         Rule::WhileLoop => parse_while(pair),
+        Rule::ForLoop => parse_for(pair),
         Rule::Comparison => parse_binary(pair),
         Rule::Additive => parse_binary(pair),
         Rule::Multiplicative => parse_binary(pair),
@@ -144,6 +145,34 @@ fn parse_call(pair: Pair<Rule>) -> Result<Expr, String> {
     }
 
     Ok(expr)
+}
+
+fn parse_for(pair: Pair<Rule>) -> Result<Expr, String> {
+    // ForLoop   = { "for" ~ Identifier ~ "in" ~ Expr ~ ".." ~ Expr ~ Block }
+    let mut inner = pair.into_inner();
+    let var = inner.next().unwrap().as_str().into();
+
+    let start = inner.next().unwrap();
+    let start = Box::new(parse_expr(start)?);
+
+    let end = inner.next().unwrap();
+    let end = Box::new(parse_expr(end)?);
+
+    let body = parse_block(inner.next().unwrap())?;
+
+    Ok(Expr::For {
+        var,
+        start,
+        end,
+        body,
+    })
+}
+
+fn parse_while(pair: Pair<Rule>) -> ExprResult {
+    let mut inner = pair.into_inner();
+    let cond = Box::new(parse_expr(inner.next().unwrap())?);
+    let body = parse_block(inner.next().unwrap())?;
+    Ok(Expr::While { cond, body })
 }
 
 fn parse_unary(pair: Pair<Rule>) -> Result<Expr, String> {
@@ -209,11 +238,4 @@ fn parse_conditional(pair: Pair<Rule>) -> ExprResult {
         then_branch,
         else_branch,
     })
-}
-
-fn parse_while(pair: Pair<Rule>) -> ExprResult {
-    let mut inner = pair.into_inner();
-    let cond = Box::new(parse_expr(inner.next().unwrap())?);
-    let body = parse_block(inner.next().unwrap())?;
-    Ok(Expr::While { cond, body })
 }

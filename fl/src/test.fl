@@ -1,5 +1,9 @@
-def add(a, b) {
-    return a + b
+fn fib(n) {
+    if (n < 2) {
+        return n
+    } else {
+        return fib(n - 1) + fib(n - 2)
+    }
 }
 
-add(1, 4)
+fib(10)  # = 55

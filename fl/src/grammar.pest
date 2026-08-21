@@ -10,7 +10,7 @@ Program = _{ SOI ~ Stmt* ~ EOI }
 Stmt       =  { Function | SimpleStmt }
 SimpleStmt = _{ (Return | Assignment | Expr) }
 
-Function =  { "def" ~ Identifier ~ "(" ~ Params? ~ ")" ~ Block }
+Function =  { "fn" ~ Identifier ~ "(" ~ Params? ~ ")" ~ Block }
 Params   = _{ Identifier ~ ("," ~ Identifier)* }
 
 Block = { "{" ~ Stmt* ~ "}" }

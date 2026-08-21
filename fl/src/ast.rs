@@ -72,7 +72,7 @@ impl fmt::Display for Stmt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Stmt::Function { name, params, body } => {
-                write!(f, "def {}({}) {{ ", name, params.join(", "))?;
+                write!(f, "fn {}({}) {{ ", name, params.join(", "))?;
                 for stmt in body {
                     write!(f, "{} ", stmt)?;
                 }

@@ -1,2 +1,7 @@
-default:
+default: repl
+
+file:
     cargo run ./src/test.fl
+
+repl:
+    cargo run

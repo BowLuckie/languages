@@ -154,6 +154,7 @@ impl Interpreter {
                         }
                     }
                 }
+                self.call_stack.pop();
                 Ok(result)
             }
 

@@ -1,6 +1,6 @@
-use crate::ast::*;
+use crate::ast::{BinaryOp, Expr, Program, Stmt, UnaryOp};
 use core::fmt;
-use std::collections::HashMap;
+use std::{collections::HashMap, ptr};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
@@ -15,10 +15,13 @@ pub enum Value {
 
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let addr = ptr::from_ref(self) as usize;
         match self {
-            Value::Int(n) => write!(f, "{}", n),
-            Value::Bool(b) => write!(f, "{}", b),
-            Value::Function { params, .. } => write!(f, "<function({})>", params.join(", ")),
+            Value::Int(n) => write!(f, "{n} "),
+            Value::Bool(b) => write!(f, "{b}"),
+            Value::Function { params, .. } => {
+                write!(f, "<function({})> at {addr:#x}", params.join(", "))
+            }
             Value::Unit => write!(f, "()"),
         }
     }
@@ -35,10 +38,21 @@ impl Frame {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Interpreter {
     globals: HashMap<String, Value>,
     call_stack: Vec<Frame>,
+    trace: bool,
+}
+
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self {
+            globals: HashMap::new(),
+            call_stack: vec![Frame::new()],
+            trace: false,
+        }
+    }
 }
 
 enum ControlFlow {
@@ -48,21 +62,19 @@ enum ControlFlow {
 
 impl Interpreter {
     pub fn new() -> Self {
-        Self {
-            call_stack: vec![Frame::new()],
-            ..Default::default()
-        }
+        Self::default()
     }
 
-    pub fn run(&mut self, program: &Program) -> Result<Value, String> {
-        let mut result = Value::Unit;
+    pub fn set_trace(&mut self, trace: bool) {
+        self.trace = trace;
+    }
+
+    pub fn run(&mut self, program: &Program) -> Result<(), String> {
         for stmt in program {
-            match self.exec_stmt(stmt)? {
-                ControlFlow::Continue(v) => result = v,
-                ControlFlow::Return(v) => return Ok(v),
-            }
+            self.exec_stmt(stmt)?;
         }
-        Ok(result)
+
+        Ok(())
     }
 
     fn exec_stmt(&mut self, stmt: &Stmt) -> Result<ControlFlow, String> {
@@ -97,7 +109,17 @@ impl Interpreter {
     }
 
     fn eval_expr(&mut self, expr: &Expr) -> Result<Value, String> {
+        if self.trace {
+            eprintln!("[trace] eval: {}", expr);
+        }
         match expr {
+            Expr::Print(args) => {
+                for expr in args {
+                    let value = self.eval_expr(expr)?;
+                    println!("{}", value);
+                }
+                Ok(Value::Unit)
+            }
             Expr::Int(n) => Ok(Value::Int(*n)),
 
             Expr::Bool(b) => Ok(Value::Bool(*b)),

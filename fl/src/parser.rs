@@ -22,7 +22,6 @@ pub fn parse(source: &str) -> SResult<Program> {
         }
     }
 
-    dbg!(&program);
     Ok(program)
 }
 
@@ -133,7 +132,11 @@ fn parse_call(pair: Pair<Rule>) -> Result<Expr, String> {
                 .map(|e| parse_expr(e))
                 .collect::<Result<_, _>>()?;
             if let Expr::Var(name) = expr {
-                expr = Expr::Call { name, args };
+                if name == "print" {
+                    expr = Expr::Print(args)
+                } else {
+                    expr = Expr::Call { name, args };
+                }
             } else {
                 return Err("Can only call named functions".to_string());
             }

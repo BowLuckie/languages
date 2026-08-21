@@ -45,6 +45,7 @@ pub enum Expr {
         body: Vec<Stmt>,
     },
     Block(Vec<Stmt>),
+    Print(Vec<Expr>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -88,6 +89,7 @@ impl fmt::Display for Stmt {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Expr::Print(expr) => write!(f, "core print({:#?})", expr),
             Expr::Int(n) => write!(f, "{}", n),
             Expr::Bool(b) => write!(f, "{}", b),
             Expr::Var(name) => write!(f, "{}", name),

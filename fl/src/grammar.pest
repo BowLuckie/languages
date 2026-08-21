@@ -19,11 +19,12 @@ Return = { "return" ~ Expr }
 
 Assignment = { Identifier ~ "=" ~ Expr }
 
-Expr = { Conditional | WhileLoop | Comparison }
+Expr = { Conditional | WhileLoop | ForLoop | Comparison }
 
 Conditional = { "if" ~ "(" ~ Expr ~ ")" ~ Block ~ "else" ~ Block }
 
 WhileLoop = { "while" ~ "(" ~ Expr ~ ")" ~ Block }
+ForLoop   = { "for" ~ Identifier ~ "in" ~ Expr ~ ".." ~ Expr ~ Block }
 
 Comparison = { Additive ~ (CompOp ~ Additive)* }
 CompOp     = { "<=" | ">=" | "<" | ">" | "==" | "!=" }
